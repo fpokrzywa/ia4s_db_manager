@@ -1,0 +1,43 @@
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 system-ui, sans-serif; color: #1c2128; background: #f6f8fa; }
+.hidden { display: none !important; }
+.error { color: #cf222e; min-height: 1.2em; margin: 4px 0 0; }
+
+.login { display: flex; align-items: center; justify-content: center; height: 100vh; }
+.login-card { background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,.12); width: 300px; display: flex; flex-direction: column; gap: 12px; }
+.login-card h1 { font-size: 18px; margin: 0 0 8px; }
+input, select, textarea { font: inherit; padding: 6px 8px; border: 1px solid #d0d7de; border-radius: 6px; }
+button { font: inherit; padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px; background: #2da44e; color: #fff; cursor: pointer; }
+button.ghost { background: #fff; color: #1c2128; }
+button.danger { background: #cf222e; color: #fff; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #24292f; color: #fff; }
+.topbar .title { font-weight: 600; }
+.topbar .server { color: #adbac7; flex: 1; }
+.body { display: flex; flex: 1; min-height: 0; }
+.sidebar { width: 260px; background: #fff; border-right: 1px solid #d0d7de; overflow: auto; padding: 8px; }
+.panel { flex: 1; overflow: auto; padding: 16px; }
+
+.tree-item { padding: 4px 6px; cursor: pointer; border-radius: 4px; white-space: nowrap; }
+.tree-item:hover { background: #f0f3f6; }
+.tree-item.active { background: #ddf4ff; }
+.tree-db { font-weight: 600; }
+.tree-table { padding-left: 22px; }
+
+table.grid { border-collapse: collapse; width: 100%; background: #fff; }
+table.grid th, table.grid td { border: 1px solid #d0d7de; padding: 4px 8px; text-align: left; }
+table.grid th { background: #f6f8fa; }
+.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.tabs button { background: #fff; color: #1c2128; }
+.tabs button.active { background: #ddf4ff; }
+
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; }
+.modal { background: #fff; padding: 24px; border-radius: 8px; width: 420px; display: flex; flex-direction: column; gap: 10px; max-height: 80vh; overflow: auto; }
+.modal h2 { margin: 0; font-size: 16px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row label { width: 110px; }
+.row > input, .row > select { flex: 1; }
+.notice { color: #57606a; font-style: italic; }

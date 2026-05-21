@@ -1,3 +1,33 @@
 <!doctype html>
-<html><head><title>Database Manager</title></head>
-<body><h1>Database Manager</h1></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Database Manager</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div id="login" class="login hidden">
+    <form id="login-form" class="login-card">
+      <h1>Database Manager</h1>
+      <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required>
+      <button type="submit">Log in</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <span class="title">Database Manager</span>
+      <span id="server-label" class="server"></span>
+      <button id="logout" class="ghost">Log out</button>
+    </header>
+    <div class="body">
+      <aside id="sidebar" class="sidebar"></aside>
+      <main id="panel" class="panel"></main>
+    </div>
+  </div>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>
