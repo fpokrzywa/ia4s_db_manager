@@ -1,6 +1,7 @@
 import { get, post } from "./api.js";
 import { renderDatabaseOverview, newDatabaseDialog, dropDatabaseDialog }
   from "./databases.js";
+import { renderTableView as tableView, newTableDialog } from "./tables.js";
 
 const loginEl = document.getElementById("login");
 const appEl = document.getElementById("app");
@@ -129,6 +130,7 @@ async function loadSidebar() {
       dropDatabaseDialog(db.name, loadSidebar);
     };
     dbEl.onclick = () => selectDatabase(db.name);
+    dbEl.ondblclick = () => newTableDialog(db.name, loadSidebar);
     sidebar.append(dbEl);
 
     let tables;
@@ -161,7 +163,7 @@ function openConsole() {
 
 // Placeholders replaced in later phases.
 async function renderTableView(db, table) {
-  document.getElementById("panel").textContent = `${db}.${table}`;
+  await tableView(db, table, loadSidebar);
 }
 function renderConsole(db) {
   document.getElementById("panel").textContent = "SQL Console";
