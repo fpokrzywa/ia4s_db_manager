@@ -2,6 +2,7 @@ import { get, post } from "./api.js";
 import { renderDatabaseOverview, newDatabaseDialog, dropDatabaseDialog }
   from "./databases.js";
 import { renderTableView as tableView, newTableDialog } from "./tables.js";
+import { renderConsole as consoleView } from "./query.js";
 
 const loginEl = document.getElementById("login");
 const appEl = document.getElementById("app");
@@ -170,7 +171,7 @@ async function renderTableView(db, table) {
   await tableView(db, table, loadSidebar);
 }
 function renderConsole(db) {
-  document.getElementById("panel").textContent = "SQL Console";
+  consoleView(db);
 }
 
 // --- auth / boot ------------------------------------------------------------
