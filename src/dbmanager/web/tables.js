@@ -99,7 +99,7 @@ async function addColumnDialog(db, table, refresh) {
   ]);
   if (!v) return;
   try {
-    await post(`/api/databases/${db}/tables/${table}/columns`, {
+    await post(`/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/columns`, {
       name: v.name, type: v.type, nullable: v.nullable,
       default: v.default || null,
     });
@@ -129,7 +129,7 @@ async function addIndexDialog(db, table, columns, refresh) {
   ]);
   if (!v) return;
   try {
-    await post(`/api/databases/${db}/tables/${table}/indexes`,
+    await post(`/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/indexes`,
       { name: v.name, columns: [v.column], unique: v.unique });
     await renderTableView(db, table, refresh);
   } catch (e) { showError(e.message); }
@@ -144,7 +144,7 @@ async function addConstraintDialog(db, table, columns, refresh) {
   ]);
   if (!v) return;
   try {
-    await post(`/api/databases/${db}/tables/${table}/constraints`,
+    await post(`/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/constraints`,
       { type: v.type, columns: [v.column], name: v.name || null });
     await renderTableView(db, table, refresh);
   } catch (e) { showError(e.message); }
