@@ -115,7 +115,7 @@ async function editColumnDialog(db, table, col, refresh) {
   if (!v) return;
   try {
     await patch(
-      `/api/databases/${db}/tables/${table}/columns/${encodeURIComponent(col.name)}`,
+      `/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/columns/${encodeURIComponent(col.name)}`,
       { new_name: v.new_name || null, type: v.type || null });
     await renderTableView(db, table, refresh); await refresh();
   } catch (e) { showError(e.message); }
@@ -204,7 +204,7 @@ export async function newTableDialog(db, refresh) {
   ]);
   if (!v) return;
   try {
-    await post(`/api/databases/${db}/tables`, {
+    await post(`/api/databases/${encodeURIComponent(db)}/tables`, {
       name: v.name,
       columns: [{ name: v.col, type: v.type, primary_key: true,
                   nullable: false }],
