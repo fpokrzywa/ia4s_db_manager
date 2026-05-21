@@ -1,5 +1,6 @@
 import { get, post, patch, del } from "./api.js";
 import { confirmModal, formModal, showError } from "./app.js";
+import { renderDataTab as dataTab } from "./rows.js";
 
 let current = { db: null, table: null, tab: "data" };
 
@@ -30,9 +31,7 @@ export async function renderTableView(db, table, refresh) {
   else await renderDataTab(content, db, table);
 }
 
-// renderDataTab is provided by rows.js (Task 13). Bound at load time.
-let renderDataTab = async (el) => { el.textContent = "Data tab — Phase 4."; };
-export function bindDataTab(fn) { renderDataTab = fn; }
+const renderDataTab = dataTab;
 
 async function renderStructure(el, db, table, refresh) {
   const base = `/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}`;
