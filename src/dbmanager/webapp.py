@@ -49,3 +49,8 @@ def index() -> FileResponse:
 
 # --- routers (added in later phases) ----------------------------------------
 # ROUTER REGISTRATION MARKER — do not remove
+from fastapi import Depends
+from dbmanager.auth import require_session
+from dbmanager.routes import databases
+
+app.include_router(databases.router, dependencies=[Depends(require_session)])
