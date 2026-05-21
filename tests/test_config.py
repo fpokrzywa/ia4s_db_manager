@@ -1,4 +1,3 @@
-import os
 import pytest
 from dbmanager.config import Settings
 
