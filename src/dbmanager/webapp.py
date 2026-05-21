@@ -52,5 +52,7 @@ def index() -> FileResponse:
 from fastapi import Depends
 from dbmanager.auth import require_session
 from dbmanager.routes import databases
+from dbmanager.routes import tables
 
 app.include_router(databases.router, dependencies=[Depends(require_session)])
+app.include_router(tables.router, dependencies=[Depends(require_session)])
