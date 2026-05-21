@@ -37,3 +37,30 @@ def test_create_database_sql():
 def test_drop_database_force_sql():
     rendered = sqlbuild.drop_database("shop", force=True).as_string()
     assert rendered == 'DROP DATABASE "shop" WITH (FORCE)'
+
+
+def test_create_table_sql():
+    cols = [
+        {"name": "id", "type": "integer", "nullable": False,
+         "default": None, "primary_key": True},
+        {"name": "label", "type": "text", "nullable": True,
+         "default": None, "primary_key": False},
+    ]
+    rendered = sqlbuild.create_table("items", cols).as_string()
+    assert rendered == (
+        'CREATE TABLE "public"."items" ('
+        '"id" integer NOT NULL, "label" text, PRIMARY KEY ("id"))'
+    )
+
+
+def test_add_column_sql():
+    col = {"name": "qty", "type": "integer", "nullable": False, "default": "0"}
+    rendered = sqlbuild.add_column("items", col).as_string()
+    assert rendered == (
+        'ALTER TABLE "public"."items" '
+        'ADD COLUMN "qty" integer NOT NULL DEFAULT 0'
+    )
+
+
+def test_drop_table_sql():
+    assert sqlbuild.drop_table("items").as_string() == 'DROP TABLE "public"."items"'
