@@ -78,6 +78,10 @@ export function formModal(title, fields) {
         el = document.createElement("input");
         el.type = f.type || "text";
       }
+      if (f.value !== undefined) {
+        if (f.type === "checkbox") el.checked = Boolean(f.value);
+        else el.value = f.value;
+      }
       inputs[f.name] = el;
       row.append(label, el);
       box.append(row);

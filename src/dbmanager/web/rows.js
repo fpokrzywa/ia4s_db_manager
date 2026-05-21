@@ -110,13 +110,16 @@ async function addRowDialog(el, db, table, columns) {
   const values = {};
   for (const c of columns) if (v[c] !== "") values[c] = v[c];
   try {
-    await post(`/api/databases/${db}/tables/${table}/rows`, { values });
+    await post(`/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/rows`, { values });
     await draw(el, db, table);
   } catch (e) { showError(e.message); }
 }
 
 async function editRowDialog(el, db, table, columns, pk, row) {
-  const fields = columns.map((c) => ({ name: c, label: c, type: "text" }));
+  const fields = columns.map((c) => ({
+    name: c, label: c, type: "text",
+    value: row[c] === null ? "" : String(row[c]),
+  }));
   const v = await formModal("Edit row", fields);
   if (!v) return;
   // Send only the columns whose value changed.
@@ -127,7 +130,7 @@ async function editRowDialog(el, db, table, columns, pk, row) {
   }
   if (Object.keys(values).length === 0) return;
   try {
-    await patch(`/api/databases/${db}/tables/${table}/rows`, { pk, values });
+    await patch(`/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/rows`, { pk, values });
     await draw(el, db, table);
   } catch (e) { showError(e.message); }
 }
