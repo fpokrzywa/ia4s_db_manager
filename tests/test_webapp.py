@@ -26,3 +26,17 @@ def test_logout_clears_session():
     c.post("/api/login", json={"password": "test-password"})
     resp = c.post("/api/logout")
     assert resp.status_code == 200
+
+
+def test_server_info_returns_host_port():
+    c = TestClient(app)
+    c.post("/api/login", json={"password": "test-password"})
+    resp = c.get("/api/server-info")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "host" in data and "port" in data
+
+
+def test_server_info_requires_auth():
+    resp = TestClient(app).get("/api/server-info")
+    assert resp.status_code == 401

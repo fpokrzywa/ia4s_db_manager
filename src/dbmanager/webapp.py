@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from dbmanager.auth import password_matches
 from dbmanager.config import Settings
+from psycopg.conninfo import conninfo_to_dict
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 _settings = Settings.from_env()
@@ -60,3 +61,10 @@ app.include_router(databases.router, dependencies=[Depends(require_session)])
 app.include_router(tables.router, dependencies=[Depends(require_session)])
 app.include_router(rows.router, dependencies=[Depends(require_session)])
 app.include_router(query.router, dependencies=[Depends(require_session)])
+
+
+@app.get("/api/server-info", dependencies=[Depends(require_session)])
+def server_info() -> dict:
+    """Host and port of the configured Postgres server — no credentials."""
+    info = conninfo_to_dict(Settings.from_env().database_url)
+    return {"host": info.get("host") or "", "port": info.get("port") or ""}
