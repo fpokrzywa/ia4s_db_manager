@@ -10,9 +10,22 @@
   <div id="login" class="login hidden">
     <form id="login-form" class="login-card">
       <h1>Database Manager</h1>
+      <input id="login-email" type="email" placeholder="Email" autocomplete="username" required>
       <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required>
       <button type="submit">Log in</button>
       <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="change-password" class="login hidden">
+    <form id="change-password-form" class="login-card">
+      <h1>Set a new password</h1>
+      <p class="notice">You must change your password before continuing.</p>
+      <input id="cp-current" type="password" placeholder="Current password" autocomplete="current-password" required>
+      <input id="cp-new" type="password" placeholder="New password (min 8 characters)" autocomplete="new-password" required>
+      <input id="cp-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password" required>
+      <button type="submit">Change password</button>
+      <p id="cp-error" class="error"></p>
     </form>
   </div>
 

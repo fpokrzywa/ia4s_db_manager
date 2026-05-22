@@ -226,8 +226,11 @@ function renderConsole(db) {
 
 // --- auth / boot ------------------------------------------------------------
 
+const changePwEl = document.getElementById("change-password");
+
 async function showApp() {
   loginEl.classList.add("hidden");
+  changePwEl.classList.add("hidden");
   appEl.classList.remove("hidden");
   await loadSidebar();
   try {
@@ -238,7 +241,13 @@ async function showApp() {
 }
 function showLogin() {
   appEl.classList.add("hidden");
+  changePwEl.classList.add("hidden");
   loginEl.classList.remove("hidden");
+}
+function showChangePassword() {
+  appEl.classList.add("hidden");
+  loginEl.classList.add("hidden");
+  changePwEl.classList.remove("hidden");
 }
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
@@ -246,12 +255,33 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   const errEl = document.getElementById("login-error");
   errEl.textContent = "";
   try {
-    await post("/api/login", {
+    const r = await post("/api/login", {
+      email: document.getElementById("login-email").value,
       password: document.getElementById("login-password").value,
     });
-    await showApp();
+    if (r.must_change_password) showChangePassword();
+    else await showApp();
   } catch (err) { errEl.textContent = err.message; }
 });
+
+document.getElementById("change-password-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById("cp-error");
+    errEl.textContent = "";
+    const current = document.getElementById("cp-current").value;
+    const next = document.getElementById("cp-new").value;
+    const confirm = document.getElementById("cp-confirm").value;
+    if (next !== confirm) {
+      errEl.textContent = "new passwords do not match";
+      return;
+    }
+    try {
+      await post("/api/change-password",
+        { current_password: current, new_password: next });
+      await showApp();
+    } catch (err) { errEl.textContent = err.message; }
+  });
 
 document.getElementById("logout").addEventListener("click", async () => {
   await post("/api/logout");
@@ -259,6 +289,9 @@ document.getElementById("logout").addEventListener("click", async () => {
 });
 
 (async function init() {
-  try { await get("/api/databases"); await showApp(); }
-  catch { showLogin(); }
+  try {
+    const me = await get("/api/me");
+    if (me.must_change_password) showChangePassword();
+    else await showApp();
+  } catch { showLogin(); }
 })();
