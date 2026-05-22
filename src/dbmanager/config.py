@@ -10,15 +10,12 @@ load_dotenv(override=False)
 
 @dataclass(frozen=True)
 class Settings:
-    database_url: str
+    database_url: str | None
     common_data_url: str
     app_secret: str
 
     @classmethod
     def from_env(cls) -> "Settings":
-        db = os.environ.get("DATABASE_URL")
-        if not db:
-            raise RuntimeError("DATABASE_URL is required in environment or .env")
         common = os.environ.get("DATABASE_COMMON_DATA_URL")
         if not common:
             raise RuntimeError(
@@ -29,4 +26,6 @@ class Settings:
         if len(secret) < 32:
             raise RuntimeError(
                 "APP_SECRET must be at least 32 characters for secure key derivation")
-        return cls(database_url=db, common_data_url=common, app_secret=secret)
+        # DATABASE_URL is optional — only used to seed the first server.
+        return cls(database_url=os.environ.get("DATABASE_URL") or None,
+                   common_data_url=common, app_secret=secret)

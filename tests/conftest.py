@@ -86,10 +86,21 @@ def common_data_url(postgresql):
 
 @pytest.fixture
 def client(server_url, common_data_url, monkeypatch):
-    """A TestClient logged in as the seeded test user."""
+    """A TestClient logged in as the seeded test user, with a default server
+    (the throwaway Postgres) registered."""
     from fastapi.testclient import TestClient
+    from psycopg.conninfo import conninfo_to_dict
+    from dbmanager import authdb, serverdb
     monkeypatch.setenv("DATABASE_URL", server_url)
     monkeypatch.setenv("DATABASE_COMMON_DATA_URL", common_data_url)
+    p = conninfo_to_dict(server_url)
+    with authdb.auth_conn(common_data_url) as conn:
+        if not serverdb.list_servers(conn):
+            serverdb.create_server(
+                conn, label="test-server", host=p.get("host"),
+                port=int(p.get("port") or 5432), username=p.get("user"),
+                password=p.get("password") or "", maintenance_db="postgres",
+                is_default=True)
     from dbmanager.webapp import app
     c = TestClient(app)
     resp = c.post("/api/login", json={"email": "test@example.com",

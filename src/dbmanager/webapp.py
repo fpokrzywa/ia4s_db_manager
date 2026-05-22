@@ -9,6 +9,7 @@ from psycopg.conninfo import conninfo_to_dict
 from starlette.middleware.sessions import SessionMiddleware
 
 from dbmanager.auth import require_session
+from dbmanager.deps import active_server
 from dbmanager.config import Settings
 from dbmanager.routes import databases, query, rows, session, tables, users
 
@@ -28,9 +29,9 @@ def index() -> FileResponse:
 
 
 @app.get("/api/server-info", dependencies=[Depends(require_session)])
-def server_info() -> dict:
-    """Host and port of the configured Postgres server — no credentials."""
-    info = conninfo_to_dict(Settings.from_env().database_url)
+def server_info(server: str = Depends(active_server)) -> dict:
+    """Host and port of the active Postgres server — no credentials."""
+    info = conninfo_to_dict(server)
     return {"host": info.get("host") or "", "port": info.get("port") or ""}
 
 

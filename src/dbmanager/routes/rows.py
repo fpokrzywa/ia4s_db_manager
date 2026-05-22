@@ -4,11 +4,11 @@ Rows are identified for update/delete by their primary-key columns. A table
 with no primary key is returned as a read-only grid (editable=false).
 """
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from psycopg import errors as pgerrors, sql as pgsql
 from pydantic import BaseModel
 
-from dbmanager.deps import target_db
+from dbmanager.deps import active_server, target_db
 from dbmanager.inspect import table_structure
 from dbmanager.sqlbuild import qualified
 
@@ -38,11 +38,12 @@ def _structure_or_404(conn, db: str, table: str) -> dict:
 @router.get("")
 def list_rows(db: str, table: str, page: int = 1, page_size: int = 50,
               filter_column: str | None = None,
-              filter_value: str | None = None) -> dict:
+              filter_value: str | None = None,
+              server: str = Depends(active_server)) -> dict:
     """A page of rows, plus total count and primary-key metadata."""
     page = max(page, 1)
     page_size = min(max(page_size, 1), 500)
-    with target_db(db) as conn:
+    with target_db(server, db) as conn:
         struct = _structure_or_404(conn, db, table)
         col_names = {c["name"] for c in struct["columns"]}
         pk = struct["primary_key"]
@@ -75,7 +76,8 @@ def list_rows(db: str, table: str, page: int = 1, page_size: int = 50,
 
 
 @router.post("", status_code=201)
-def insert_row(db: str, table: str, body: InsertBody) -> dict:
+def insert_row(db: str, table: str, body: InsertBody,
+               server: str = Depends(active_server)) -> dict:
     if not body.values:
         raise HTTPException(400, "no values supplied")
     cols = list(body.values)
@@ -83,7 +85,7 @@ def insert_row(db: str, table: str, body: InsertBody) -> dict:
         qualified(table),
         pgsql.SQL(", ").join(pgsql.Identifier(c) for c in cols),
         pgsql.SQL(", ").join(pgsql.Placeholder() for _ in cols))
-    with target_db(db) as conn:
+    with target_db(server, db) as conn:
         try:
             row = conn.execute(stmt, [body.values[c] for c in cols]).fetchone()
         except pgerrors.Error as exc:
@@ -92,7 +94,8 @@ def insert_row(db: str, table: str, body: InsertBody) -> dict:
 
 
 @router.patch("")
-def update_row(db: str, table: str, body: UpdateBody) -> dict:
+def update_row(db: str, table: str, body: UpdateBody,
+               server: str = Depends(active_server)) -> dict:
     if not body.pk:
         raise HTTPException(400, "primary-key values are required to update a row")
     if not body.values:
@@ -107,7 +110,7 @@ def update_row(db: str, table: str, body: UpdateBody) -> dict:
             pgsql.SQL("{} = {}").format(pgsql.Identifier(c), pgsql.Placeholder())
             for c in pcols))
     params = [body.values[c] for c in vcols] + [body.pk[c] for c in pcols]
-    with target_db(db) as conn:
+    with target_db(server, db) as conn:
         try:
             row = conn.execute(stmt, params).fetchone()
         except pgerrors.Error as exc:
@@ -118,7 +121,8 @@ def update_row(db: str, table: str, body: UpdateBody) -> dict:
 
 
 @router.delete("")
-def delete_row(db: str, table: str, body: DeleteBody) -> dict:
+def delete_row(db: str, table: str, body: DeleteBody,
+               server: str = Depends(active_server)) -> dict:
     if not body.pk:
         raise HTTPException(400, "primary-key values are required to delete a row")
     pcols = list(body.pk)
@@ -127,7 +131,7 @@ def delete_row(db: str, table: str, body: DeleteBody) -> dict:
         pgsql.SQL(" AND ").join(
             pgsql.SQL("{} = {}").format(pgsql.Identifier(c), pgsql.Placeholder())
             for c in pcols))
-    with target_db(db) as conn:
+    with target_db(server, db) as conn:
         try:
             row = conn.execute(stmt, [body.pk[c] for c in pcols]).fetchone()
         except pgerrors.Error as exc:
