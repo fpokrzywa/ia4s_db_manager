@@ -7,6 +7,7 @@ in .env; each test run creates and drops its own databases.
 """
 import os
 
+import psycopg
 from dotenv import load_dotenv
 
 # Load the real DATABASE_URL from .env before anything else reads the env.
@@ -62,3 +63,21 @@ def server_url(postgresql):
         f"postgresql://{info.user}:{info.password or ''}"
         f"@{info.host}:{info.port}/postgres"
     )
+
+
+@pytest.fixture
+def common_data_url(postgresql):
+    """A throwaway database with the auth schema applied and a seeded test
+    user (test@example.com / test-password, no forced change)."""
+    info = postgresql.info
+    url = (f"postgresql://{info.user}:{info.password or ''}"
+           f"@{info.host}:{info.port}/{info.dbname}")
+    from dbmanager.authdb import apply_schema
+    from dbmanager.passwords import hash_password
+    apply_schema(url)
+    with psycopg.connect(url, autocommit=True) as conn:
+        conn.execute(
+            "INSERT INTO users (email, password_hash, must_change_password) "
+            "VALUES (%s, %s, false) ON CONFLICT (email) DO NOTHING",
+            ("test@example.com", hash_password("test-password")))
+    return url
