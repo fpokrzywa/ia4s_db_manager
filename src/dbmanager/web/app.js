@@ -211,7 +211,7 @@ async function loadSidebar() {
 
 async function selectDatabase(db) {
   selected = { db };
-  await renderDatabaseOverview(db);
+  await renderDatabaseOverview(db, loadSidebar);
 }
 
 async function selectTable(db, table) {

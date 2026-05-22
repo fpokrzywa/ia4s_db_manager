@@ -1,8 +1,9 @@
 import { get, post, del } from "./api.js";
 import { confirmModal, formModal, fmtBytes, showError } from "./app.js";
+import { newTableDialog } from "./tables.js";
 
 // Render the database overview panel.
-export async function renderDatabaseOverview(dbName) {
+export async function renderDatabaseOverview(dbName, reload) {
   const panel = document.getElementById("panel");
   const databases = await get("/api/databases");
   const db = databases.find((d) => d.name === dbName);
@@ -19,6 +20,17 @@ export async function renderDatabaseOverview(dbName) {
     ? `owner ${db.owner} · ${db.encoding} · ${fmtBytes(db.size_bytes)} · ${tables.length} table(s)`
     : `${tables.length} table(s)`;
   panel.append(meta);
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "toolbar";
+  const newTableBtn = document.createElement("button");
+  newTableBtn.textContent = "+ New table";
+  newTableBtn.onclick = () => newTableDialog(dbName, async () => {
+    if (reload) await reload();
+    await renderDatabaseOverview(dbName, reload);
+  });
+  toolbar.append(newTableBtn);
+  panel.append(toolbar);
 
   const grid = document.createElement("table");
   grid.className = "grid";
