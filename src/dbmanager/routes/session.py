@@ -38,7 +38,15 @@ def login(body: LoginBody, request: Request) -> dict:
 
 @router.post("/logout")
 def logout(request: Request) -> dict:
-    """End the session."""
+    """End the session, recording a logout audit event."""
+    user_id = request.session.get("user_id")
+    email = request.session.get("email")
+    if user_id and email:
+        settings = Settings.from_env()
+        ip, ua = _client(request)
+        with authdb.auth_conn(settings.common_data_url) as conn:
+            authdb.record_event(conn, email=email, user_id=user_id,
+                                event="logout", ip_address=ip, user_agent=ua)
     request.session.clear()
     return {"ok": True}
 
