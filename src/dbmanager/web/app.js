@@ -247,11 +247,37 @@ async function showApp() {
   changePwEl.classList.add("hidden");
   appEl.classList.remove("hidden");
   await loadSidebar();
+  await renderServerPicker();
+}
+
+// Build the top-bar server picker from the registry.
+async function renderServerPicker() {
+  const label = document.getElementById("server-label");
+  label.innerHTML = "";
+  let servers, active;
   try {
-    const info = await get("/api/server-info");
-    document.getElementById("server-label").textContent =
-      info.host ? `${info.host}:${info.port}` : "";
-  } catch { /* label is cosmetic — ignore failures */ }
+    servers = await get("/api/servers");
+    active = await get("/api/active-server");
+  } catch { return; }
+  if (!servers.length) {
+    label.textContent = "no servers";
+    return;
+  }
+  const select = document.createElement("select");
+  for (const s of servers) {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.label;
+    select.append(opt);
+  }
+  if (active.id != null) select.value = String(active.id);
+  select.onchange = async () => {
+    try {
+      await post("/api/active-server", { server_id: Number(select.value) });
+      await loadSidebar();
+    } catch (e) { showError(e.message); }
+  };
+  label.append(select);
 }
 function showLogin() {
   appEl.classList.add("hidden");
