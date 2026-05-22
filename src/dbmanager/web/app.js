@@ -3,6 +3,7 @@ import { renderDatabaseOverview, newDatabaseDialog, dropDatabaseDialog }
   from "./databases.js";
 import { renderTableView as tableView, newTableDialog } from "./tables.js";
 import { renderConsole as consoleView } from "./query.js";
+import { renderUsers } from "./users.js";
 
 const loginEl = document.getElementById("login");
 const appEl = document.getElementById("app");
@@ -174,6 +175,12 @@ async function loadSidebar() {
   consoleBtn.textContent = "▸ SQL Console";
   consoleBtn.onclick = () => openConsole();
   sidebar.append(consoleBtn);
+
+  const usersBtn = document.createElement("div");
+  usersBtn.className = "tree-item";
+  usersBtn.textContent = "▸ Users";
+  usersBtn.onclick = () => renderUsers();
+  sidebar.append(usersBtn);
 
   const databases = await get("/api/databases");
   for (const db of databases) {
