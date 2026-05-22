@@ -20,7 +20,7 @@ export function fmtBytes(n) {
 
 export function showError(msg) { alert(msg); }
 
-function modalShell() {
+export function modalShell() {
   const bg = document.createElement("div");
   bg.className = "modal-bg";
   const box = document.createElement("div");
@@ -28,6 +28,51 @@ function modalShell() {
   bg.append(box);
   document.body.append(bg);
   return { bg, box };
+}
+
+// An ordered multi-column picker. Returns { el, get }: `el` is the DOM node to
+// insert into a dialog; `get()` returns the chosen column names, in order.
+export function columnPicker(options) {
+  const chosen = [];
+  const wrap = document.createElement("div");
+  const ctl = document.createElement("div");
+  ctl.className = "row";
+  const picker = document.createElement("select");
+  for (const o of options) {
+    const opt = document.createElement("option");
+    opt.value = o; opt.textContent = o;
+    picker.append(opt);
+  }
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "ghost";
+  addBtn.textContent = "Add";
+  const list = document.createElement("div");
+  list.style.marginTop = "4px";
+  const render = () => {
+    list.innerHTML = "";
+    chosen.forEach((col, i) => {
+      const tag = document.createElement("span");
+      tag.textContent = `${i + 1}. ${col} `;
+      tag.style.marginRight = "8px";
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "ghost";
+      x.textContent = "✕";
+      x.onclick = () => { chosen.splice(i, 1); render(); };
+      tag.append(x);
+      list.append(tag);
+    });
+  };
+  addBtn.onclick = () => {
+    if (picker.value && !chosen.includes(picker.value)) {
+      chosen.push(picker.value);
+      render();
+    }
+  };
+  ctl.append(picker, addBtn);
+  wrap.append(ctl, list);
+  return { el: wrap, get: () => chosen.slice() };
 }
 
 // Typed-confirmation modal. Resolves true only if the user types `phrase`.
@@ -75,11 +120,15 @@ export function formModal(title, fields) {
       } else if (f.type === "checkbox") {
         el = document.createElement("input");
         el.type = "checkbox";
+      } else if (f.type === "columns") {
+        const picker = columnPicker(f.options);
+        el = picker.el;
+        el.__picker = picker;
       } else {
         el = document.createElement("input");
         el.type = f.type || "text";
       }
-      if (f.value !== undefined) {
+      if (f.value !== undefined && f.type !== "columns") {
         if (f.type === "checkbox") el.checked = Boolean(f.value);
         else el.value = f.value;
       }
@@ -97,8 +146,9 @@ export function formModal(title, fields) {
     ok.onclick = () => {
       const out = {};
       for (const f of fields) {
-        out[f.name] = f.type === "checkbox"
-          ? inputs[f.name].checked : inputs[f.name].value.trim();
+        if (f.type === "checkbox") out[f.name] = inputs[f.name].checked;
+        else if (f.type === "columns") out[f.name] = inputs[f.name].__picker.get();
+        else out[f.name] = inputs[f.name].value.trim();
       }
       bg.remove(); resolve(out);
     };
