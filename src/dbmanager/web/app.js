@@ -4,6 +4,7 @@ import { renderDatabaseOverview, newDatabaseDialog, dropDatabaseDialog }
 import { renderTableView as tableView, newTableDialog } from "./tables.js";
 import { renderConsole as consoleView } from "./query.js";
 import { renderUsers } from "./users.js";
+import { renderServers } from "./servers.js";
 
 const loginEl = document.getElementById("login");
 const appEl = document.getElementById("app");
@@ -181,6 +182,12 @@ async function loadSidebar() {
   usersBtn.textContent = "▸ Users";
   usersBtn.onclick = () => renderUsers();
   sidebar.append(usersBtn);
+
+  const serversBtn = document.createElement("div");
+  serversBtn.className = "tree-item";
+  serversBtn.textContent = "▸ Servers";
+  serversBtn.onclick = () => renderServers();
+  sidebar.append(serversBtn);
 
   const databases = await get("/api/databases");
   for (const db of databases) {
