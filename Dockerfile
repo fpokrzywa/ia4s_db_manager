@@ -5,5 +5,5 @@ COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-cache-dir .
 
-EXPOSE 8000
-CMD ["uvicorn", "dbmanager.webapp:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 80
+CMD ["uvicorn", "dbmanager.webapp:app", "--host", "0.0.0.0", "--port", "80"]

@@ -1,13 +1,8 @@
 services:
-  dbmanager:
+  ia4s_db_manager:
     build: .
-    container_name: dbmanager
+    container_name: ia4s_db_manager
     restart: unless-stopped
     env_file: .env
-    network_mode: host
-    # network_mode: host makes the container share the host network, so
-    # DATABASE_URL can point at 127.0.0.1:5432 and the app listens on
-    # the host's port 8000. If you prefer bridge networking instead,
-    # remove network_mode, add `ports: ["8000:8000"]`, and set
-    # DATABASE_URL host to `host.docker.internal` with:
-    #   extra_hosts: ["host.docker.internal:host-gateway"]
+    ports:
+      - "8000:80"
