@@ -72,8 +72,10 @@ def common_data_url(postgresql):
     url = (f"postgresql://{info.user}:{info.password or ''}"
            f"@{info.host}:{info.port}/{info.dbname}")
     from dbmanager.authdb import apply_schema
+    from dbmanager.serverdb import apply_schema as apply_servers_schema
     from dbmanager.passwords import hash_password
     apply_schema(url)
+    apply_servers_schema(url)
     with psycopg.connect(url, autocommit=True) as conn:
         conn.execute(
             "INSERT INTO users (email, password_hash, must_change_password) "
