@@ -87,6 +87,9 @@ def change_password(common_data_url: str, user_id: int, current: str,
         if user is None:
             raise HTTPException(404, "user not found")
         if not verify_password(current, user["password_hash"]):
+            authdb.record_event(conn, email=user["email"], user_id=user_id,
+                                event="password_change_failed", ip_address=ip,
+                                user_agent=user_agent)
             raise HTTPException(400, "current password is incorrect")
         authdb.set_password(conn, user_id, hash_password(new),
                             must_change=False)

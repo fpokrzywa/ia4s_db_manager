@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 
 # Load the real DATABASE_URL from .env before anything else reads the env.
 load_dotenv()
-os.environ.setdefault("APP_PASSWORD", "test-password")
 os.environ.setdefault("APP_SECRET", "test-secret-key-at-least-32-characters")
 
 import pytest
