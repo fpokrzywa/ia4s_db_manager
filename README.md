@@ -1,18 +1,22 @@
 # Postgres Database Manager
 
-A self-hosted web app for full CRUD over a Postgres server: create/drop
-databases, manage table structure, edit rows, run SQL, and manage the people
-who can log in.
+A self-hosted web app for full CRUD over Postgres servers: create/drop
+databases, manage table structure, edit rows, run SQL, manage a registry of
+servers to work against, and manage the people who can log in.
 
 ## Configuration
 
 Copy `.env.example` to `.env` and set:
 
-- `DATABASE_URL` — connection string pointing at the **`postgres`** maintenance
-  database. The app substitutes the database name per request.
+- `DATABASE_URL` — seeds the **first** server into the registry on the initial
+  `dbmanager init-auth` run; point it at the **`postgres`** maintenance
+  database. Afterwards the in-app server registry is the source of truth and
+  this variable is unused.
 - `DATABASE_COMMON_DATA_URL` — connection string for the **`common_data`**
-  database, which holds the `users` and `user_sessions` (auth-audit) tables.
-- `APP_SECRET` — a random 32+ character string for signing session cookies.
+  database, which holds the `users`, `user_sessions` (auth-audit), and
+  `servers` (registry) tables.
+- `APP_SECRET` — a random 32+ character string. It signs session cookies and
+  derives the key that encrypts stored server passwords.
   Generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
 
 ## Authentication
@@ -32,13 +36,23 @@ repo):
 dbmanager init-auth --email you@example.com --password "a-temporary-password"
 ```
 
-This creates the `users` and `user_sessions` tables in `common_data` and seeds
-the first user, who is required to change their password on first login.
+This creates the `users`, `user_sessions`, and `servers` tables in
+`common_data`, seeds the first user (who is required to change their password
+on first login), and — if `DATABASE_URL` is set and the registry is empty —
+registers that server as the first, default registry entry.
 
 ### Managing users
 
 Any logged-in user can open the **Users** page (in the sidebar) to add users,
 deactivate/reactivate them, reset a password, or unlock a locked account.
+
+### Managing servers
+
+The app works against a registry of Postgres servers rather than a single
+hardwired connection. Any logged-in user can open the **Servers** page (in the
+sidebar) to add, edit, delete, and test servers; stored passwords are
+encrypted at rest. The top-bar picker selects which server the current session
+operates on. New sessions start on the default server.
 
 ## Run locally
 
@@ -83,9 +97,11 @@ directly to the internet.
 
 ## Security notes
 
-- Per-user email/password accounts gate the app; the connected Postgres role's
-  privileges set the ceiling on what the app can do.
-- Passwords are bcrypt-hashed; failed logins lock the account after 5 attempts.
+- Per-user email/password accounts gate the app; each registered server's
+  Postgres role privileges set the ceiling on what the app can do there.
+- User passwords are bcrypt-hashed; failed logins lock the account after 5
+  attempts. Stored server passwords are Fernet-encrypted at rest with a key
+  derived from `APP_SECRET`.
 - All authentication events are written to the `user_sessions` audit log.
 - The SQL Console runs arbitrary SQL by design — that is the point of the
   tool. The login is the security boundary.
