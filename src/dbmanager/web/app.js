@@ -230,6 +230,11 @@ async function showApp() {
   loginEl.classList.add("hidden");
   appEl.classList.remove("hidden");
   await loadSidebar();
+  try {
+    const info = await get("/api/server-info");
+    document.getElementById("server-label").textContent =
+      info.host ? `${info.host}:${info.port}` : "";
+  } catch { /* label is cosmetic — ignore failures */ }
 }
 function showLogin() {
   appEl.classList.add("hidden");
