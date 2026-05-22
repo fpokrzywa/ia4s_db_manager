@@ -123,13 +123,15 @@ async function editColumnDialog(db, table, col, refresh) {
 async function addIndexDialog(db, table, columns, refresh) {
   const v = await formModal("Create index", [
     { name: "name", label: "Index name", type: "text" },
-    { name: "column", label: "Column", type: "select", options: columns },
+    { name: "columns", label: "Columns", type: "columns", options: columns },
     { name: "unique", label: "Unique", type: "checkbox" },
   ]);
   if (!v) return;
+  if (!v.columns.length) { showError("select at least one column"); return; }
   try {
-    await post(`/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/indexes`,
-      { name: v.name, columns: [v.column], unique: v.unique });
+    await post(
+      `/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/indexes`,
+      { name: v.name, columns: v.columns, unique: v.unique });
     await renderTableView(db, table, refresh);
   } catch (e) { showError(e.message); }
 }
