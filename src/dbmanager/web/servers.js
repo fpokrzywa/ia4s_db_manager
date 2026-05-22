@@ -70,13 +70,15 @@ async function serverDialog(server) {
       type: "password" },
     { name: "maintenance_db", label: "Maint. DB", type: "text",
       value: editing ? server.maintenance_db : "postgres" },
-    { name: "sslmode", label: "SSL mode", type: "select", options: SSLMODES },
+    { name: "sslmode", label: "SSL mode", type: "select", options: SSLMODES,
+      value: editing ? server.sslmode : "prefer" },
     { name: "is_default", label: "Default", type: "checkbox",
       value: editing ? server.is_default : false },
     { name: "notes", label: "Notes", type: "text",
       value: editing ? (server.notes || "") : "" },
   ]);
   if (!v) return;
+  if (!editing && !v.password) { showError("A password is required."); return; }
   const payload = {
     label: v.label, host: v.host, port: Number(v.port) || 5432,
     username: v.username, maintenance_db: v.maintenance_db,
