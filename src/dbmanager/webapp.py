@@ -1,5 +1,6 @@
 """Database Manager — FastAPI app: login, static files, routers."""
 from __future__ import annotations
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -28,8 +29,8 @@ class LoginBody(BaseModel):
 @app.post("/api/login")
 def login(body: LoginBody, request: Request) -> dict:
     """Check the password and start a session."""
-    settings = Settings.from_env()
-    if not password_matches(body.password, settings.app_password):
+    app_password = os.environ.get("APP_PASSWORD", "")
+    if not password_matches(body.password, app_password):
         raise HTTPException(status_code=401, detail="incorrect password")
     request.session["authenticated"] = True
     return {"ok": True}
