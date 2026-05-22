@@ -70,3 +70,21 @@ def test_conninfo_for_decrypts_password(common_data_url):
     info = serverdb.conninfo_for(full, dbname="mydb")
     assert "password=topsecret" in info
     assert "host=h.example" in info and "dbname=mydb" in info
+
+
+def test_conninfo_from_fields_builds_libpq_string():
+    info = serverdb.conninfo_from_fields(
+        host="h.example", port=6000, username="bob", password="topsecret",
+        sslmode="require", dbname="mydb")
+    assert "host=h.example" in info
+    assert "port=6000" in info
+    assert "user=bob" in info
+    assert "password=topsecret" in info
+    assert "dbname=mydb" in info
+
+
+def test_conninfo_from_fields_defaults_dbname_to_maintenance_db():
+    info = serverdb.conninfo_from_fields(
+        host="h", port=5432, username="u", password="p",
+        maintenance_db="admin_db")
+    assert "dbname=admin_db" in info

@@ -38,6 +38,15 @@ class ActiveServerBody(BaseModel):
     server_id: int
 
 
+class TestConnectionBody(BaseModel):
+    host: str
+    port: int = 5432
+    username: str
+    password: str
+    maintenance_db: str = "postgres"
+    sslmode: str = "prefer"
+
+
 def _conn():
     return authdb.auth_conn(Settings.from_env().common_data_url)
 
@@ -95,6 +104,22 @@ def delete_server(server_id: int) -> dict:
         if not serverdb.delete_server(conn, server_id):
             raise HTTPException(404, f"no server with id {server_id}")
     return {"deleted": server_id}
+
+
+@router.post("/servers/test-connection")
+def test_connection(body: TestConnectionBody) -> dict:
+    """Try to connect using raw connection fields (before a server is saved);
+    report success or the scrubbed error message. Never raises."""
+    conninfo = serverdb.conninfo_from_fields(
+        host=body.host, port=body.port, username=body.username,
+        password=body.password, maintenance_db=body.maintenance_db,
+        sslmode=body.sslmode)
+    try:
+        with psycopg.connect(conninfo, connect_timeout=8) as probe:
+            probe.execute("SELECT 1")
+        return {"ok": True}
+    except Exception as exc:
+        return {"ok": False, "error": _scrub(str(exc))}
 
 
 @router.post("/servers/{server_id}/test")

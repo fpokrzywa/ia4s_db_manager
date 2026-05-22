@@ -106,15 +106,31 @@ def delete_server(conn, server_id) -> bool:
     return row is not None
 
 
+def conninfo_from_fields(*, host, port, username, password,
+                         maintenance_db="postgres", sslmode="prefer",
+                         dbname=None) -> str:
+    """Build a libpq conninfo string from raw connection fields. `dbname`
+    overrides `maintenance_db`."""
+    return make_conninfo(
+        "",
+        host=host,
+        port=str(port),
+        user=username,
+        password=password,
+        dbname=dbname or maintenance_db,
+        sslmode=sslmode,
+    )
+
+
 def conninfo_for(server: dict, dbname: str | None = None) -> str:
     """Build a libpq conninfo string for a server record. `dbname` overrides
     the server's maintenance database."""
-    return make_conninfo(
-        "",
+    return conninfo_from_fields(
         host=server["host"],
-        port=str(server["port"]),
-        user=server["username"],
+        port=server["port"],
+        username=server["username"],
         password=decrypt(server["password_enc"]),
-        dbname=dbname or server["maintenance_db"],
+        maintenance_db=server["maintenance_db"],
         sslmode=server["sslmode"],
+        dbname=dbname,
     )

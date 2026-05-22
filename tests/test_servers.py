@@ -99,3 +99,33 @@ def test_patch_without_password_keeps_stored_password(client, common_data_url):
     with auth_conn(common_data_url) as conn:
         after = serverdb.get_server(conn, created["id"])["password_enc"]
     assert after == before
+
+
+def test_test_connection_ok(client, server_url):
+    from psycopg.conninfo import conninfo_to_dict
+    p = conninfo_to_dict(server_url)
+    resp = client.post("/api/servers/test-connection", json={
+        "host": p.get("host"), "port": int(p.get("port") or 5432),
+        "username": p.get("user"), "password": p.get("password") or "",
+        "maintenance_db": "postgres"})
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+
+
+def test_test_connection_reports_failure(client):
+    resp = client.post("/api/servers/test-connection", json={
+        "host": "nonexistent-host.invalid", "port": 5432,
+        "username": "u", "password": "pw"})
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is False
+
+
+def test_test_connection_does_not_leak_password(client):
+    secret = "p@ss-no-leak-testconn-551"
+    resp = client.post("/api/servers/test-connection", json={
+        "host": "nonexistent-host.invalid", "port": 5432,
+        "username": "u", "password": secret})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["ok"] is False
+    assert secret not in (body.get("error") or "")
