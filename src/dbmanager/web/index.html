@@ -7,13 +7,20 @@
   <title>Database Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;600;700;800;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+  <div class="fx-grid" aria-hidden="true"></div>
+  <div class="fx-heat" aria-hidden="true"></div>
+  <div class="fx-grain" aria-hidden="true"></div>
+
   <div id="login" class="login hidden">
     <form id="login-form" class="login-card">
-      <h1>Database Manager</h1>
+      <p class="card-kicker">Secure access</p>
+      <h1 class="wordmark" aria-label="Database Manager">
+        <span style="--i:0">D</span><span style="--i:1">a</span><span style="--i:2">t</span><span style="--i:3">a</span><span style="--i:4">b</span><span style="--i:5">a</span><span style="--i:6">s</span><span style="--i:7">e</span><span class="sp" style="--i:8"></span><span style="--i:9">M</span><span style="--i:10">a</span><span style="--i:11">n</span><span style="--i:12">a</span><span style="--i:13">g</span><span style="--i:14">e</span><span style="--i:15">r</span>
+      </h1>
       <input id="login-email" type="email" placeholder="Email" autocomplete="username" required>
       <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required>
       <button type="submit">Log in</button>
@@ -23,7 +30,8 @@
 
   <div id="change-password" class="login hidden">
     <form id="change-password-form" class="login-card">
-      <h1>Set a new password</h1>
+      <p class="card-kicker">First sign-in</p>
+      <h1 class="card-title">Set a new password</h1>
       <p class="notice">You must change your password before continuing.</p>
       <input id="cp-current" type="password" placeholder="Current password" autocomplete="current-password" required>
       <input id="cp-new" type="password" placeholder="New password (min 8 characters)" autocomplete="new-password" required>
@@ -35,7 +43,10 @@
 
   <div id="app" class="app hidden">
     <header class="topbar">
-      <span class="title">Database Manager</span>
+      <span class="title" aria-label="Database Manager">
+        <span style="--i:0">D</span><span style="--i:1">a</span><span style="--i:2">t</span><span style="--i:3">a</span><span style="--i:4">b</span><span style="--i:5">a</span><span style="--i:6">s</span><span style="--i:7">e</span><span class="sp" style="--i:8"></span><span style="--i:9">M</span><span style="--i:10">a</span><span style="--i:11">n</span><span style="--i:12">a</span><span style="--i:13">g</span><span style="--i:14">e</span><span style="--i:15">r</span>
+      </span>
+      <span class="tagline">Postgres control deck</span>
       <span id="server-label" class="server"></span>
       <button id="logout" class="ghost">Log out</button>
     </header>
