@@ -178,6 +178,11 @@ export function formModal(title, fields, opts = {}) {
 
 // --- sidebar ----------------------------------------------------------------
 
+// Names of databases whose table list is expanded. Empty at page load, so
+// every database starts collapsed; toggling updates this set, and it survives
+// sidebar rebuilds (navigation) within the session.
+const expandedDbs = new Set();
+
 async function loadSidebar() {
   const sidebar = document.getElementById("sidebar");
   sidebar.innerHTML = "";
@@ -223,12 +228,32 @@ async function loadSidebar() {
     try {
       tables = await get(`/api/databases/${encodeURIComponent(db.name)}/tables`);
     } catch { tables = []; }
+
+    const tablesEl = document.createElement("div");
+    sidebar.append(tablesEl);
     for (const t of tables) {
       const tEl = document.createElement("div");
       tEl.className = "tree-item tree-table";
       tEl.textContent = t.name;
       tEl.onclick = () => selectTable(db.name, t.name);
-      sidebar.append(tEl);
+      tablesEl.append(tEl);
+    }
+
+    if (tables.length) {
+      const toggle = document.createElement("span");
+      toggle.className = "tree-toggle";
+      const expanded = expandedDbs.has(db.name);
+      tablesEl.hidden = !expanded;
+      toggle.textContent = expanded ? "−" : "+";
+      toggle.onclick = (e) => {
+        e.stopPropagation();
+        const willExpand = tablesEl.hidden;
+        tablesEl.hidden = !willExpand;
+        toggle.textContent = willExpand ? "−" : "+";
+        if (willExpand) expandedDbs.add(db.name);
+        else expandedDbs.delete(db.name);
+      };
+      dbEl.append(toggle);
     }
   }
 }
