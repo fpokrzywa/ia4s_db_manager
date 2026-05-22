@@ -26,4 +26,7 @@ class Settings:
         secret = os.environ.get("APP_SECRET")
         if not secret:
             raise RuntimeError("APP_SECRET is required in environment or .env")
+        if len(secret) < 32:
+            raise RuntimeError(
+                "APP_SECRET must be at least 32 characters for secure key derivation")
         return cls(database_url=db, common_data_url=common, app_secret=secret)

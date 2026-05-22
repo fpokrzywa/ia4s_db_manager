@@ -18,3 +18,11 @@ def test_from_env_missing_common_data_url_raises(monkeypatch):
     monkeypatch.setenv("APP_SECRET", "x" * 32)
     with pytest.raises(RuntimeError, match="DATABASE_COMMON_DATA_URL"):
         Settings.from_env()
+
+
+def test_from_env_short_app_secret_raises(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/postgres")
+    monkeypatch.setenv("DATABASE_COMMON_DATA_URL", "postgresql://localhost/common_data")
+    monkeypatch.setenv("APP_SECRET", "short")
+    with pytest.raises(RuntimeError, match="APP_SECRET"):
+        Settings.from_env()
