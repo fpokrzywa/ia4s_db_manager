@@ -1,5 +1,6 @@
 """Server registry — CRUD, connection test, and active-server selection."""
 from __future__ import annotations
+import re
 import psycopg
 from fastapi import APIRouter, HTTPException, Request
 from psycopg import errors as pgerrors
@@ -9,6 +10,16 @@ from dbmanager import authdb, serverdb
 from dbmanager.config import Settings
 
 router = APIRouter(prefix="/api", tags=["servers"])
+
+# A conninfo-style password token, quoted ('...' with backslash escapes) or bare.
+_PASSWORD_RE = re.compile(r"password\s*=\s*('(?:[^'\\]|\\.)*'|\S+)",
+                          re.IGNORECASE)
+
+
+def _scrub(message: str) -> str:
+    """Redact any password=... token so a connection-error message never
+    echoes a decrypted server password back to the client."""
+    return _PASSWORD_RE.sub("password=***", message)
 
 
 class ServerBody(BaseModel):
@@ -99,7 +110,7 @@ def test_server(server_id: int) -> dict:
             probe.execute("SELECT 1")
         return {"ok": True}
     except Exception as exc:
-        return {"ok": False, "error": str(exc)}
+        return {"ok": False, "error": _scrub(str(exc))}
 
 
 @router.get("/active-server")

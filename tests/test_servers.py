@@ -69,3 +69,33 @@ def test_test_endpoint_reports_failure(client):
     resp = client.post(f"/api/servers/{created['id']}/test")
     assert resp.status_code == 200
     assert resp.json()["ok"] is False
+
+
+def test_test_endpoint_does_not_leak_password(client):
+    """A failed connection test must never echo the stored password."""
+    secret = "p@ss-do-not-leak-7799"
+    created = client.post("/api/servers", json={
+        "label": "leak-check", "host": "203.0.113.9", "port": 5432,
+        "username": "u", "password": secret}).json()
+    resp = client.post(f"/api/servers/{created['id']}/test")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["ok"] is False
+    assert secret not in (body.get("error") or "")
+
+
+def test_patch_without_password_keeps_stored_password(client, common_data_url):
+    """PATCH with no password field leaves the stored password unchanged."""
+    from dbmanager import serverdb
+    from dbmanager.authdb import auth_conn
+    created = client.post("/api/servers", json={
+        "label": "keep-pw", "host": "h", "username": "u",
+        "password": "orig-secret"}).json()
+    with auth_conn(common_data_url) as conn:
+        before = serverdb.get_server(conn, created["id"])["password_enc"]
+    resp = client.patch(f"/api/servers/{created['id']}", json={
+        "label": "keep-pw2", "host": "h2", "username": "u"})
+    assert resp.status_code == 200
+    with auth_conn(common_data_url) as conn:
+        after = serverdb.get_server(conn, created["id"])["password_enc"]
+    assert after == before
