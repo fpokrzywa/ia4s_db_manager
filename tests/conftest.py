@@ -20,6 +20,30 @@ from pytest_postgresql import factories
 
 _params = conninfo_to_dict(os.environ["DATABASE_URL"])
 
+
+def _drop_stale_test_databases() -> None:
+    """Drop any dbm_pytest* databases left behind by an interrupted prior run,
+    so pytest-postgresql can recreate its template/test databases cleanly."""
+    import psycopg
+
+    server = (
+        f"postgresql://{_params.get('user')}:{_params.get('password') or ''}"
+        f"@{_params.get('host', '127.0.0.1')}:{_params.get('port', 5432)}/postgres"
+    )
+    try:
+        with psycopg.connect(server, autocommit=True, connect_timeout=10) as conn:
+            conn.execute("UPDATE pg_database SET datistemplate = false "
+                         "WHERE datname LIKE 'dbm_pytest%'")
+            stale = conn.execute("SELECT datname FROM pg_database "
+                                 "WHERE datname LIKE 'dbm_pytest%'").fetchall()
+            for (name,) in stale:
+                conn.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
+    except Exception:
+        pass  # best-effort; pytest-postgresql will surface any real problem
+
+
+_drop_stale_test_databases()
+
 postgresql_noproc = factories.postgresql_noproc(
     host=_params.get("host", "127.0.0.1"),
     port=int(_params.get("port", 5432)),
