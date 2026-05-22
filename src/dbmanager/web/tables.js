@@ -107,15 +107,25 @@ async function addColumnDialog(db, table, refresh) {
 }
 
 async function editColumnDialog(db, table, col, refresh) {
+  const wasNullable = col.is_nullable === "YES";
+  const currentDefault = col.column_default ?? "";
   const v = await formModal(`Edit column "${col.name}"`, [
     { name: "new_name", label: "Rename to", type: "text" },
     { name: "type", label: "New type", type: "text" },
+    { name: "nullable", label: "Nullable", type: "checkbox", value: wasNullable },
+    { name: "default", label: "Default", type: "text", value: currentDefault },
   ]);
   if (!v) return;
+  const body = { new_name: v.new_name || null, type: v.type || null };
+  if (v.nullable !== wasNullable) body.nullable = v.nullable;
+  if (v.default !== currentDefault) {
+    if (v.default === "") body.drop_default = true;
+    else body.default = v.default;
+  }
   try {
     await patch(
       `/api/databases/${encodeURIComponent(db)}/tables/${encodeURIComponent(table)}/columns/${encodeURIComponent(col.name)}`,
-      { new_name: v.new_name || null, type: v.type || null });
+      body);
     await renderTableView(db, table, refresh); await refresh();
   } catch (e) { showError(e.message); }
 }
