@@ -81,3 +81,17 @@ def common_data_url(postgresql):
             "VALUES (%s, %s, false) ON CONFLICT (email) DO NOTHING",
             ("test@example.com", hash_password("test-password")))
     return url
+
+
+@pytest.fixture
+def client(server_url, common_data_url, monkeypatch):
+    """A TestClient logged in as the seeded test user."""
+    from fastapi.testclient import TestClient
+    monkeypatch.setenv("DATABASE_URL", server_url)
+    monkeypatch.setenv("DATABASE_COMMON_DATA_URL", common_data_url)
+    from dbmanager.webapp import app
+    c = TestClient(app)
+    resp = c.post("/api/login", json={"email": "test@example.com",
+                                      "password": "test-password"})
+    assert resp.status_code == 200, resp.text
+    return c

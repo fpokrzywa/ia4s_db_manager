@@ -1,6 +1,5 @@
 """Password check and session-cookie guard."""
 from __future__ import annotations
-import hmac
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from fastapi import HTTPException, Request
@@ -9,14 +8,9 @@ from dbmanager import authdb
 from dbmanager.passwords import hash_password, verify_password
 
 
-def password_matches(supplied: str, expected: str) -> bool:
-    """Constant-time comparison of the supplied login password."""
-    return hmac.compare_digest(supplied, expected)
-
-
 def require_session(request: Request) -> None:
-    """FastAPI dependency: reject requests without an authenticated session."""
-    if not request.session.get("authenticated"):
+    """FastAPI dependency: reject requests without a logged-in session."""
+    if not request.session.get("user_id"):
         raise HTTPException(status_code=401, detail="authentication required")
 
 

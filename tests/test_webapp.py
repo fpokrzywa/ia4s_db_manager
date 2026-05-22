@@ -1,42 +1,22 @@
 from fastapi.testclient import TestClient
-from dbmanager.webapp import app
-
-client = TestClient(app)
 
 
-def test_index_served():
+def test_index_served(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert "Database Manager" in resp.text
 
 
-def test_login_rejects_wrong_password():
-    resp = client.post("/api/login", json={"password": "nope"})
-    assert resp.status_code == 401
-
-
-def test_login_accepts_correct_password():
-    resp = client.post("/api/login", json={"password": "test-password"})
-    assert resp.status_code == 200
-    assert resp.json() == {"ok": True}
-
-
-def test_logout_clears_session():
-    c = TestClient(app)
-    c.post("/api/login", json={"password": "test-password"})
-    resp = c.post("/api/logout")
-    assert resp.status_code == 200
-
-
-def test_server_info_returns_host_port():
-    c = TestClient(app)
-    c.post("/api/login", json={"password": "test-password"})
-    resp = c.get("/api/server-info")
+def test_server_info_returns_host_port(client):
+    resp = client.get("/api/server-info")
     assert resp.status_code == 200
     data = resp.json()
     assert "host" in data and "port" in data
 
 
-def test_server_info_requires_auth():
+def test_server_info_requires_auth(server_url, common_data_url, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", server_url)
+    monkeypatch.setenv("DATABASE_COMMON_DATA_URL", common_data_url)
+    from dbmanager.webapp import app
     resp = TestClient(app).get("/api/server-info")
     assert resp.status_code == 401

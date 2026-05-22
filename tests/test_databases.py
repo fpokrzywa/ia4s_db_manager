@@ -3,15 +3,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-@pytest.fixture
-def client(server_url, monkeypatch):
-    monkeypatch.setenv("DATABASE_URL", server_url)
-    from dbmanager.webapp import app
-    c = TestClient(app)
-    c.post("/api/login", json={"password": "test-password"})
-    return c
-
-
 def test_list_databases_includes_postgres(client):
     resp = client.get("/api/databases")
     assert resp.status_code == 200
@@ -37,8 +28,10 @@ def test_create_duplicate_database_conflicts(client):
     client.delete(f"/api/databases/{name}")
 
 
-def test_requires_auth(server_url, monkeypatch):
+def test_requires_auth(server_url, common_data_url, monkeypatch):
+    from fastapi.testclient import TestClient
     monkeypatch.setenv("DATABASE_URL", server_url)
+    monkeypatch.setenv("DATABASE_COMMON_DATA_URL", common_data_url)
     from dbmanager.webapp import app
     resp = TestClient(app).get("/api/databases")
     assert resp.status_code == 401

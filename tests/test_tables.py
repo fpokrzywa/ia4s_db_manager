@@ -4,15 +4,6 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client(server_url, monkeypatch):
-    monkeypatch.setenv("DATABASE_URL", server_url)
-    from dbmanager.webapp import app
-    c = TestClient(app)
-    c.post("/api/login", json={"password": "test-password"})
-    return c
-
-
-@pytest.fixture
 def db(client):
     """A fresh database, dropped after the test."""
     name = f"dbm_t_{uuid.uuid4().hex[:8]}"
