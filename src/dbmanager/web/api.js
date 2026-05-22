@@ -1,4 +1,4 @@
-// Thin fetch wrapper. Throws Error(message) on failure; redirects to login on 401.
+// Thin fetch wrapper. Throws Error(message) on failure; shows login on 401.
 export async function api(method, path, body) {
   const opts = { method, headers: {} };
   if (body !== undefined) {
@@ -7,8 +7,11 @@ export async function api(method, path, body) {
   }
   const resp = await fetch(path, opts);
   if (resp.status === 401 && path !== "/api/login") {
-    window.location.reload();
-    throw new Error("session expired");
+    // Not authenticated — reveal the login screen. Never reload the page here:
+    // the startup session probe expects a 401, and reloading would loop.
+    document.getElementById("app")?.classList.add("hidden");
+    document.getElementById("login")?.classList.remove("hidden");
+    throw new Error("not authenticated");
   }
   const data = resp.headers.get("content-type")?.includes("application/json")
     ? await resp.json() : null;
