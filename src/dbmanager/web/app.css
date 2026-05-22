@@ -484,6 +484,15 @@ select option { background: var(--soot-1); }
 }
 .row > input, .row > select { flex: 1; }
 .modal .row:last-child { justify-content: flex-end; margin-top: .5rem; }
+.modal-status {
+  min-height: 1.15em;
+  margin-top: .45rem;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+.modal-status.ok { color: var(--patina); }
+.modal-status.error { color: var(--rust); }
 
 /* ---- keyframes -------------------------------------------- */
 

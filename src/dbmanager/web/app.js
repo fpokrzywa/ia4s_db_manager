@@ -101,7 +101,7 @@ export function confirmModal(title, message, phrase) {
 
 // Generic form modal. `fields` = [{name,label,type,options?}]. Resolves an
 // object of values, or null if cancelled.
-export function formModal(title, fields) {
+export function formModal(title, fields, opts = {}) {
   return new Promise((resolve) => {
     const { bg, box } = modalShell();
     box.innerHTML = `<h2>${title}</h2>`;
@@ -138,24 +138,41 @@ export function formModal(title, fields) {
       row.append(label, el);
       box.append(row);
     }
-    const actions = document.createElement("div");
-    actions.className = "row";
-    const cancel = document.createElement("button");
-    cancel.className = "ghost"; cancel.textContent = "Cancel";
-    const ok = document.createElement("button");
-    ok.textContent = "Save";
-    cancel.onclick = () => { bg.remove(); resolve(null); };
-    ok.onclick = () => {
+
+    const collectValues = () => {
       const out = {};
       for (const f of fields) {
         if (f.type === "checkbox") out[f.name] = inputs[f.name].checked;
         else if (f.type === "columns") out[f.name] = inputs[f.name].__picker.get();
         else out[f.name] = inputs[f.name].value.trim();
       }
-      bg.remove(); resolve(out);
+      return out;
     };
+
+    const status = document.createElement("div");
+    status.className = "modal-status";
+    const setStatus = (msg, kind) => {
+      status.textContent = msg;
+      status.className = "modal-status" + (kind ? " " + kind : "");
+    };
+
+    const actions = document.createElement("div");
+    actions.className = "row";
+    for (const a of opts.actions || []) {
+      const btn = document.createElement("button");
+      btn.className = "ghost";
+      btn.textContent = a.label;
+      btn.onclick = () => a.onClick(collectValues(), setStatus);
+      actions.append(btn);
+    }
+    const cancel = document.createElement("button");
+    cancel.className = "ghost"; cancel.textContent = "Cancel";
+    const ok = document.createElement("button");
+    ok.textContent = "Save";
+    cancel.onclick = () => { bg.remove(); resolve(null); };
+    ok.onclick = () => { bg.remove(); resolve(collectValues()); };
     actions.append(cancel, ok);
-    box.append(actions);
+    box.append(status, actions);
   });
 }
 

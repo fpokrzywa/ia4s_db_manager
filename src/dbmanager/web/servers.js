@@ -76,7 +76,29 @@ async function serverDialog(server) {
       value: editing ? server.is_default : false },
     { name: "notes", label: "Notes", type: "text",
       value: editing ? (server.notes || "") : "" },
-  ]);
+  ], {
+    actions: [{
+      label: "Test",
+      onClick: async (vals, setStatus) => {
+        setStatus("Testing connection…", "");
+        let r;
+        try {
+          if (editing && !vals.password) {
+            r = await post(`/api/servers/${server.id}/test`);
+          } else {
+            r = await post("/api/servers/test-connection", {
+              host: vals.host, port: Number(vals.port) || 5432,
+              username: vals.username, password: vals.password,
+              maintenance_db: vals.maintenance_db || "postgres",
+              sslmode: vals.sslmode,
+            });
+          }
+        } catch (e) { setStatus(e.message, "error"); return; }
+        if (r.ok) setStatus("Connection succeeded.", "ok");
+        else setStatus("Connection failed: " + r.error, "error");
+      },
+    }],
+  });
   if (!v) return;
   if (!editing && !v.password) { showError("A password is required."); return; }
   const payload = {
