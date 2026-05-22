@@ -35,3 +35,18 @@ def test_requires_auth(server_url, common_data_url, monkeypatch):
     from dbmanager.webapp import app
     resp = TestClient(app).get("/api/databases")
     assert resp.status_code == 401
+
+
+def test_no_server_registered_returns_503(server_url, common_data_url,
+                                          monkeypatch):
+    """A logged-in request with an empty server registry gets 503."""
+    from fastapi.testclient import TestClient
+    monkeypatch.setenv("DATABASE_URL", server_url)
+    monkeypatch.setenv("DATABASE_COMMON_DATA_URL", common_data_url)
+    from dbmanager.webapp import app
+    c = TestClient(app)
+    login = c.post("/api/login", json={"email": "test@example.com",
+                                       "password": "test-password"})
+    assert login.status_code == 200, login.text
+    resp = c.get("/api/databases")
+    assert resp.status_code == 503
