@@ -5,6 +5,7 @@ import { renderTableView as tableView, newTableDialog } from "./tables.js";
 import { renderConsole as consoleView } from "./query.js";
 import { renderUsers } from "./users.js";
 import { renderServers } from "./servers.js";
+import { renderTheme, applyTheme } from "./theme.js";
 
 const loginEl = document.getElementById("login");
 const appEl = document.getElementById("app");
@@ -211,6 +212,17 @@ async function loadSidebar() {
   serversBtn.onclick = () => renderServers();
   sidebar.append(serversBtn);
 
+  // Theme — admin only
+  let isAdmin = false;
+  try { isAdmin = (await get("/api/me")).is_admin === true; } catch {}
+  if (isAdmin) {
+    const themeBtn = document.createElement("div");
+    themeBtn.className = "tree-item";
+    themeBtn.textContent = "▸ Theme";
+    themeBtn.onclick = () => renderTheme();
+    sidebar.append(themeBtn);
+  }
+
   const databases = await get("/api/databases");
   for (const db of databases) {
     const dbEl = document.createElement("div");
@@ -384,6 +396,10 @@ document.getElementById("logout").addEventListener("click", async () => {
 });
 
 (async function init() {
+  try {
+    const theme = await get("/api/theme");
+    applyTheme(theme);
+  } catch { /* theme is cosmetic — ignore failures */ }
   try {
     const me = await get("/api/me");
     if (me.must_change_password) showChangePassword();
