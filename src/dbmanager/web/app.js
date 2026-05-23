@@ -224,37 +224,50 @@ async function loadSidebar() {
     dbEl.ondblclick = () => newTableDialog(db.name, loadSidebar);
     sidebar.append(dbEl);
 
-    let tables;
-    try {
-      tables = await get(`/api/databases/${encodeURIComponent(db.name)}/tables`);
-    } catch { tables = []; }
-
     const tablesEl = document.createElement("div");
     sidebar.append(tablesEl);
-    for (const t of tables) {
-      const tEl = document.createElement("div");
-      tEl.className = "tree-item tree-table";
-      tEl.textContent = t.name;
-      tEl.onclick = () => selectTable(db.name, t.name);
-      tablesEl.append(tEl);
-    }
+    let loaded = false;
 
-    if (tables.length) {
-      const toggle = document.createElement("span");
-      toggle.className = "tree-toggle";
-      const expanded = expandedDbs.has(db.name);
-      tablesEl.hidden = !expanded;
-      toggle.textContent = expanded ? "−" : "+";
-      toggle.onclick = (e) => {
-        e.stopPropagation();
-        const willExpand = tablesEl.hidden;
-        tablesEl.hidden = !willExpand;
-        toggle.textContent = willExpand ? "−" : "+";
-        if (willExpand) expandedDbs.add(db.name);
-        else expandedDbs.delete(db.name);
-      };
-      dbEl.append(toggle);
-    }
+    const populate = async () => {
+      const placeholder = document.createElement("div");
+      placeholder.className = "tree-item tree-table";
+      placeholder.textContent = "Loading…";
+      placeholder.style.fontStyle = "italic";
+      tablesEl.append(placeholder);
+      let tables;
+      try {
+        tables = await get(`/api/databases/${encodeURIComponent(db.name)}/tables`);
+      } catch { tables = []; }
+      tablesEl.textContent = "";
+      for (const t of tables) {
+        const tEl = document.createElement("div");
+        tEl.className = "tree-item tree-table";
+        tEl.textContent = t.name;
+        tEl.onclick = () => selectTable(db.name, t.name);
+        tablesEl.append(tEl);
+      }
+      loaded = true;
+    };
+
+    const toggle = document.createElement("span");
+    toggle.className = "tree-toggle";
+    const expanded = expandedDbs.has(db.name);
+    tablesEl.hidden = !expanded;
+    toggle.textContent = expanded ? "−" : "+";
+    if (expanded) populate();
+    toggle.onclick = async (e) => {
+      e.stopPropagation();
+      const willExpand = tablesEl.hidden;
+      tablesEl.hidden = !willExpand;
+      toggle.textContent = willExpand ? "−" : "+";
+      if (willExpand) {
+        expandedDbs.add(db.name);
+        if (!loaded) await populate();
+      } else {
+        expandedDbs.delete(db.name);
+      }
+    };
+    dbEl.append(toggle);
   }
 }
 
