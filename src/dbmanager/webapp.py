@@ -1,5 +1,6 @@
 """Database Manager — FastAPI app: static files and routers."""
 from __future__ import annotations
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
@@ -8,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from psycopg.conninfo import conninfo_to_dict
 from starlette.middleware.sessions import SessionMiddleware
 
+from dbmanager import pools
 from dbmanager.auth import require_session
 from dbmanager.deps import active_server
 from dbmanager.config import Settings
@@ -16,7 +18,17 @@ from dbmanager.routes import databases, query, rows, servers, session, tables, u
 WEB_DIR = Path(__file__).resolve().parent / "web"
 _settings = Settings.from_env()
 
-app = FastAPI(title="Database Manager", docs_url="/api/docs", redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(_app):
+    """Warm the common_data pool at startup; close all pools at shutdown."""
+    pools.common_data_pool()
+    yield
+    pools.close_all()
+
+
+app = FastAPI(title="Database Manager", docs_url="/api/docs", redoc_url=None,
+              lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=_settings.app_secret,
                    https_only=False)
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")

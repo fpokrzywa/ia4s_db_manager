@@ -107,3 +107,12 @@ def client(server_url, common_data_url, monkeypatch):
                                       "password": "test-password"})
     assert resp.status_code == 200, resp.text
     return c
+
+
+@pytest.fixture(autouse=True)
+def _close_pools_after_each_test():
+    """Pools are keyed by URL; each test gets a fresh throwaway database, so
+    pools created during one test must not bleed into the next."""
+    yield
+    from dbmanager import pools
+    pools.close_all()
