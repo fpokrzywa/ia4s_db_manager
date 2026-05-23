@@ -6,13 +6,13 @@ import json
 
 
 def get_setting(conn, key: str) -> dict | None:
-    """Return the value for `key` as a dict, or None if not set."""
+    """Return the value for `key` as a dict, or None if not set.
+
+    Callers must pass a connection with `row_factory=dict_row` — both
+    `authdb.auth_conn` and the pooled `common_data_pool` connections do."""
     row = conn.execute(
         "SELECT value FROM app_settings WHERE key = %s", (key,)).fetchone()
-    if row is None:
-        return None
-    # Support both dict_row connections (keyed) and plain tuple rows.
-    return row["value"] if hasattr(row, "keys") else row[0]
+    return row["value"] if row is not None else None
 
 
 def set_setting(conn, key: str, value: dict) -> None:
