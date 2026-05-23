@@ -13,7 +13,7 @@ from dbmanager import pools
 from dbmanager.auth import require_session
 from dbmanager.deps import active_server
 from dbmanager.config import Settings
-from dbmanager.routes import databases, query, rows, servers, session, tables, users
+from dbmanager.routes import databases, query, rows, servers, session, tables, theme, users
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 _settings = Settings.from_env()
@@ -49,6 +49,7 @@ def server_info(server: str = Depends(active_server)) -> dict:
 
 # session router self-guards /me and /change-password; login/logout are open.
 app.include_router(session.router)
+app.include_router(theme.router)
 app.include_router(users.router, dependencies=[Depends(require_session)])
 app.include_router(servers.router, dependencies=[Depends(require_session)])
 app.include_router(databases.router, dependencies=[Depends(require_session)])

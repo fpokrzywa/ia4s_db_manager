@@ -33,6 +33,12 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     user_agent  text,
     created_at  timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    key         text PRIMARY KEY,
+    value       jsonb NOT NULL,
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
 """
 
 
