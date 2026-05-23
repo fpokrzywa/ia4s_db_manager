@@ -78,8 +78,9 @@ def common_data_url(postgresql):
     apply_servers_schema(url)
     with psycopg.connect(url, autocommit=True) as conn:
         conn.execute(
-            "INSERT INTO users (email, password_hash, must_change_password) "
-            "VALUES (%s, %s, false) ON CONFLICT (email) DO NOTHING",
+            "INSERT INTO users (email, password_hash, must_change_password, "
+            "                    is_admin) "
+            "VALUES (%s, %s, false, true) ON CONFLICT (email) DO NOTHING",
             ("test@example.com", hash_password("test-password")))
     return url
 
@@ -104,6 +105,26 @@ def client(server_url, common_data_url, monkeypatch):
     from dbmanager.webapp import app
     c = TestClient(app)
     resp = c.post("/api/login", json={"email": "test@example.com",
+                                      "password": "test-password"})
+    assert resp.status_code == 200, resp.text
+    return c
+
+
+@pytest.fixture
+def non_admin_client(server_url, common_data_url, monkeypatch):
+    """A TestClient logged in as a non-admin user (no is_admin flag)."""
+    from fastapi.testclient import TestClient
+    from dbmanager.passwords import hash_password
+    monkeypatch.setenv("DATABASE_URL", server_url)
+    monkeypatch.setenv("DATABASE_COMMON_DATA_URL", common_data_url)
+    with psycopg.connect(common_data_url, autocommit=True) as conn:
+        conn.execute(
+            "INSERT INTO users (email, password_hash, must_change_password) "
+            "VALUES (%s, %s, false) ON CONFLICT (email) DO NOTHING",
+            ("nonadmin@example.com", hash_password("test-password")))
+    from dbmanager.webapp import app
+    c = TestClient(app)
+    resp = c.post("/api/login", json={"email": "nonadmin@example.com",
                                       "password": "test-password"})
     assert resp.status_code == 200, resp.text
     return c

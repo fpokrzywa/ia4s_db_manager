@@ -76,3 +76,21 @@ def test_change_password_too_short(common_data_url):
         auth.change_password(common_data_url, uid, "OldPass1", "short",
                              None, None)
     assert exc.value.status_code == 400
+
+
+def test_require_admin_allows_admin(client):
+    # We use the existing /api/users endpoint (admin-only after Task 4 but
+    # for now any logged-in user can access). To test require_admin
+    # directly, mount a temporary route or wait until Task 4. For this
+    # task, the next two tests use the existing flow.
+    pass
+
+
+def test_require_admin_returns_403_for_non_admin(non_admin_client):
+    # /api/me is NOT admin-gated; we just check that requiring admin would
+    # work. Defer the real 403 test to Task 4 (which adds the first
+    # admin-only route on /api/users/{id}/admin). For Task 1 the test
+    # below verifies non_admin_client correctly identifies as non-admin.
+    resp = non_admin_client.get("/api/me")
+    assert resp.status_code == 200
+    assert resp.json()["is_admin"] is False

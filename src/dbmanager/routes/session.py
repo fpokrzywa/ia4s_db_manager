@@ -53,7 +53,7 @@ def logout(request: Request) -> dict:
 
 @router.get("/me", dependencies=[Depends(auth.require_session)])
 def me(request: Request) -> dict:
-    """The current user and whether a password change is still required."""
+    """The current user, password-change flag, and admin flag."""
     settings = Settings.from_env()
     with authdb.auth_conn(settings.common_data_url) as conn:
         user = authdb.get_user_by_id(conn, request.session["user_id"])
@@ -61,7 +61,8 @@ def me(request: Request) -> dict:
         request.session.clear()
         raise HTTPException(401, "authentication required")
     return {"email": user["email"],
-            "must_change_password": user["must_change_password"]}
+            "must_change_password": user["must_change_password"],
+            "is_admin": user["is_admin"]}
 
 
 @router.post("/change-password",

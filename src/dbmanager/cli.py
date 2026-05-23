@@ -23,7 +23,8 @@ def web(host: str, port: int, reload: bool) -> None:
 @click.option("--password", required=True, help="Temporary password.")
 def init_auth(email: str, password: str) -> None:
     """Create the auth + servers tables in common_data, seed the first user,
-    and register the DATABASE_URL server if the registry is empty."""
+    register the DATABASE_URL server if the registry is empty, and ensure at
+    least one admin exists."""
     from psycopg.conninfo import conninfo_to_dict
     from dbmanager import authdb, serverdb
     from dbmanager.config import Settings
@@ -56,3 +57,12 @@ def init_auth(email: str, password: str) -> None:
             click.echo(f"registered server '{p.get('host')}' from DATABASE_URL")
         else:
             click.echo("server registry already populated — no server seeded")
+
+        if authdb.count_admins(conn) == 0:
+            row = conn.execute(
+                "SELECT id FROM users ORDER BY id LIMIT 1").fetchone()
+            if row is not None:
+                authdb.set_admin(conn, row["id"], True)
+                click.echo(f"flagged user id={row['id']} as admin")
+        else:
+            click.echo("at least one admin already exists — no change made")

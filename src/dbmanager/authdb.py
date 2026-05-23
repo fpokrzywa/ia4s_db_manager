@@ -13,12 +13,16 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash        text NOT NULL,
     must_change_password boolean NOT NULL DEFAULT true,
     is_active            boolean NOT NULL DEFAULT true,
+    is_admin             boolean NOT NULL DEFAULT false,
     failed_attempts      integer NOT NULL DEFAULT 0,
     locked_until         timestamptz,
     last_login_at        timestamptz,
     created_at           timestamptz NOT NULL DEFAULT now(),
     updated_at           timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin
+    boolean NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS user_sessions (
     id          bigserial PRIMARY KEY,
@@ -113,8 +117,8 @@ def note_failed_attempt(conn, user_id: int, max_attempts: int,
 
 def list_users(conn) -> list[dict]:
     return conn.execute("""
-        SELECT id, email, must_change_password, is_active, failed_attempts,
-               locked_until, last_login_at, created_at
+        SELECT id, email, must_change_password, is_active, is_admin,
+               failed_attempts, locked_until, last_login_at, created_at
         FROM users ORDER BY email
     """).fetchall()
 
@@ -137,3 +141,15 @@ def update_user(conn, user_id: int, *, is_active: bool | None = None,
     return conn.execute(
         f"UPDATE users SET {', '.join(sets)} WHERE id = %s RETURNING *",
         params).fetchone()
+
+
+def count_admins(conn) -> int:
+    return conn.execute(
+        "SELECT count(*) AS n FROM users WHERE is_admin").fetchone()["n"]
+
+
+def set_admin(conn, user_id: int, is_admin: bool) -> dict | None:
+    return conn.execute("""
+        UPDATE users SET is_admin = %s, updated_at = now()
+        WHERE id = %s RETURNING *
+    """, (is_admin, user_id)).fetchone()

@@ -14,6 +14,17 @@ def require_session(request: Request) -> None:
         raise HTTPException(status_code=401, detail="authentication required")
 
 
+def require_admin(request: Request) -> None:
+    """FastAPI dependency: reject requests where the session user is not
+    flagged is_admin. Runs require_session first."""
+    require_session(request)
+    from dbmanager import pools
+    with pools.common_data_pool().connection() as conn:
+        user = authdb.get_user_by_id(conn, request.session["user_id"])
+    if user is None or not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="admin access required")
+
+
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 15
 MIN_PASSWORD_LENGTH = 8

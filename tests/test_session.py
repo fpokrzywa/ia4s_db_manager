@@ -73,3 +73,17 @@ def test_logout_clears_session(app_client):
                                         "password": "test-password"})
     assert app_client.post("/api/logout").status_code == 200
     assert app_client.get("/api/me").status_code == 401
+
+
+def test_me_includes_is_admin(client):
+    resp = client.get("/api/me")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "is_admin" in body
+    assert body["is_admin"] is True  # the seeded test user is admin
+
+
+def test_me_for_non_admin(non_admin_client):
+    resp = non_admin_client.get("/api/me")
+    assert resp.status_code == 200
+    assert resp.json()["is_admin"] is False
