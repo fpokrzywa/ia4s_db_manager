@@ -12,7 +12,6 @@ close_all() on application shutdown. The target_pool cache is LRU-bounded.
 """
 from __future__ import annotations
 from collections import OrderedDict
-from urllib.parse import urlparse, urlunparse
 
 from psycopg.conninfo import make_conninfo
 from psycopg.rows import dict_row
@@ -40,23 +39,6 @@ def _configure_autocommit(conn) -> None:
 
 def _configure_transactional(conn) -> None:
     conn.row_factory = dict_row
-
-
-def _with_dbname(conninfo: str, dbname: str) -> str:
-    """Return a copy of *conninfo* with the database name set to *dbname*.
-
-    Supports URL format (postgresql://…) and libpq key=value format.
-    Falls back to simple token append for synthetic/test conninfo strings.
-    """
-    parsed = urlparse(conninfo)
-    if parsed.scheme in ("postgresql", "postgres"):
-        return urlunparse(parsed._replace(path=f"/{dbname}"))
-    try:
-        return make_conninfo(conninfo, dbname=dbname)
-    except Exception:
-        # Synthetic conninfo (e.g. in tests where _make_pool is monkeypatched
-        # and will never actually open a connection).
-        return f"{conninfo} dbname={dbname}"
 
 
 def _make_pool(conninfo: str, *, autocommit: bool) -> ConnectionPool:
@@ -103,7 +85,7 @@ def target_pool(conninfo: str, dbname: str) -> ConnectionPool:
     if pool is not None:
         _target_pools.move_to_end(key)
         return pool
-    pool = _make_pool(_with_dbname(conninfo, dbname), autocommit=False)
+    pool = _make_pool(make_conninfo(conninfo, dbname=dbname), autocommit=False)
     _target_pools[key] = pool
     while len(_target_pools) > _TARGET_POOL_LRU:
         _, evicted = _target_pools.popitem(last=False)

@@ -46,10 +46,10 @@ def test_target_pool_lru_eviction(monkeypatch):
 
     monkeypatch.setattr(pools, "_make_pool", fake_make)
 
-    pool0 = pools.target_pool("server-x", "db0")
+    pool0 = pools.target_pool("host=server-x", "db0")
     for i in range(1, pools._TARGET_POOL_LRU + 1):
-        pools.target_pool("server-x", f"db{i}")
-    assert ("server-x", "db0") not in pools._target_pools
+        pools.target_pool("host=server-x", f"db{i}")
+    assert ("host=server-x", "db0") not in pools._target_pools
     assert pool0.closed
 
 
