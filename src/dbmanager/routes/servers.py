@@ -6,8 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 from psycopg import errors as pgerrors
 from pydantic import BaseModel
 
-from dbmanager import authdb, serverdb
-from dbmanager.config import Settings
+from dbmanager import pools, serverdb
 
 router = APIRouter(prefix="/api", tags=["servers"])
 
@@ -48,7 +47,7 @@ class TestConnectionBody(BaseModel):
 
 
 def _conn():
-    return authdb.auth_conn(Settings.from_env().common_data_url)
+    return pools.common_data_pool().connection()
 
 
 @router.get("/servers")
