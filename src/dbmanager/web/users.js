@@ -1,5 +1,5 @@
 import { get, post, patch } from "./api.js";
-import { formModal, showError } from "./app.js";
+import { confirmModal, formModal, showError } from "./app.js";
 
 // Render the Users management panel.
 export async function renderUsers() {
@@ -15,7 +15,7 @@ export async function renderUsers() {
   toolbar.append(mkBtn("+ User", addUserDialog, ""));
   panel.append(toolbar);
 
-  const users = await get("/api/users");
+  const [users, me] = await Promise.all([get("/api/users"), get("/api/me")]);
   const table = document.createElement("table");
   table.className = "grid";
   table.innerHTML =
@@ -41,6 +41,25 @@ export async function renderUsers() {
       mkBtn("Reset password", () => resetPassword(u.id, u.email), "ghost"));
     if (locked) {
       actions.append(mkBtn("Unlock", () => unlockUser(u.id), "ghost"));
+    }
+    if (me.is_admin === true) {
+      const adminBtn = document.createElement("button");
+      adminBtn.className = "ghost";
+      adminBtn.textContent = u.is_admin ? "Revoke admin" : "Make admin";
+      adminBtn.style.marginRight = "4px";
+      adminBtn.onclick = async () => {
+        const verb = u.is_admin ? "revoke" : "grant";
+        const ok = await confirmModal(
+          `${verb === "grant" ? "Make" : "Revoke"} admin for ${u.email}`,
+          `Type the email to confirm you want to ${verb} admin.`,
+          u.email);
+        if (!ok) return;
+        try {
+          await patch(`/api/users/${u.id}/admin`, { is_admin: !u.is_admin });
+          await renderUsers();
+        } catch (e) { showError(e.message); }
+      };
+      actions.append(adminBtn);
     }
     tr.append(actions);
     body.append(tr);

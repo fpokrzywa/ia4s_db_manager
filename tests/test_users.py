@@ -54,3 +54,54 @@ def test_reset_password_sets_must_change(client):
 def test_patch_missing_user_404(client):
     resp = client.patch("/api/users/999999", json={"is_active": False})
     assert resp.status_code == 404
+
+
+def test_promote_user_to_admin(client, common_data_url):
+    """An admin promotes a non-admin user."""
+    from dbmanager.passwords import hash_password
+    import psycopg
+    with psycopg.connect(common_data_url, autocommit=True) as conn:
+        row = conn.execute("""
+            INSERT INTO users (email, password_hash, must_change_password)
+            VALUES (%s, %s, false)
+            ON CONFLICT (email) DO UPDATE SET email=excluded.email
+            RETURNING id
+        """, ("promotable@example.com", hash_password("pw"))).fetchone()
+        promo_id = row[0]
+    resp = client.patch(f"/api/users/{promo_id}/admin", json={"is_admin": True})
+    assert resp.status_code == 200
+    assert resp.json()["is_admin"] is True
+
+
+def test_demote_last_admin_returns_400(client):
+    """Demoting the sole admin (the seeded test user) is refused."""
+    from dbmanager.config import Settings
+    import psycopg
+    with psycopg.connect(Settings.from_env().common_data_url) as conn:
+        me_id = conn.execute(
+            "SELECT id FROM users WHERE email='test@example.com'"
+        ).fetchone()[0]
+    resp = client.patch(f"/api/users/{me_id}/admin", json={"is_admin": False})
+    assert resp.status_code == 400
+    assert "last admin" in resp.json()["detail"].lower()
+
+
+def test_non_admin_cannot_promote(non_admin_client, common_data_url):
+    from dbmanager.passwords import hash_password
+    import psycopg
+    with psycopg.connect(common_data_url, autocommit=True) as conn:
+        row = conn.execute("""
+            INSERT INTO users (email, password_hash, must_change_password)
+            VALUES (%s, %s, false)
+            ON CONFLICT (email) DO UPDATE SET email=excluded.email
+            RETURNING id
+        """, ("victim@example.com", hash_password("pw"))).fetchone()
+        target = row[0]
+    resp = non_admin_client.patch(
+        f"/api/users/{target}/admin", json={"is_admin": True})
+    assert resp.status_code == 403
+
+
+def test_demote_unknown_user_404(client):
+    resp = client.patch("/api/users/999999/admin", json={"is_admin": True})
+    assert resp.status_code == 404

@@ -1,10 +1,10 @@
 """User management routes."""
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from psycopg import errors as pgerrors
 from pydantic import BaseModel
 
-from dbmanager import authdb
+from dbmanager import auth, authdb, pools
 from dbmanager.config import Settings
 from dbmanager.passwords import hash_password
 
@@ -73,3 +73,23 @@ def update_user(user_id: int, body: UpdateUserBody) -> dict:
                                unlock=body.unlock)
         user = authdb.get_user_by_id(conn, user_id)
     return _public(user)
+
+
+class AdminBody(BaseModel):
+    is_admin: bool
+
+
+@router.patch("/{user_id}/admin", dependencies=[Depends(auth.require_admin)])
+def set_admin(user_id: int, body: AdminBody) -> dict:
+    """Promote or demote a user. Demoting the last admin returns 400."""
+    with pools.common_data_pool().connection() as conn:
+        target = authdb.get_user_by_id(conn, user_id)
+        if target is None:
+            raise HTTPException(404, f"no user with id {user_id}")
+        if not body.is_admin and target["is_admin"]:
+            if authdb.count_admins(conn) <= 1:
+                raise HTTPException(
+                    400, "cannot demote the last admin")
+        row = authdb.set_admin(conn, user_id, body.is_admin)
+    return {"id": row["id"], "email": row["email"],
+            "is_admin": row["is_admin"]}
